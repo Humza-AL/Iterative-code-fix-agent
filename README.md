@@ -1,92 +1,90 @@
 # Iterative Code Fix Agent
 
-An AI-powered Python debugging agent built with LangChain and OpenAI. The agent can inspect source files, identify bugs, modify code, execute tests, and use test results to guide its corrections.
+An AI-powered Python debugging application built with **LangChain, OpenAI, and Streamlit**. The application analyzes Python code, identifies potential bugs, suggests corrections, and generates behavioral tests to evaluate the corrected implementation.
+
+Users can paste Python code directly into the application, review AI-generated corrections, and execute tests to verify the results.
 
 ## Features
 
-- **AI-powered debugging:** Analyzes Python code and identifies implementation issues.
-- **Tool calling:** Uses custom tools to read files, write code, and execute Python scripts.
-- **Automated testing:** Runs a test suite to verify code changes.
-- **Iterative corrections:** Uses test feedback to guide further fixes, within configured limits.
-- **Controlled file modifications:** Restricts permitted code changes to designated project files.
-- **Test-result reporting:** Displays the original code, corrected code, and actual test execution results.
-- **Error handling:** Returns tool errors to the agent for inspection.
+- **AI-powered debugging:** Analyzes submitted Python code and identifies potential implementation issues.
+- **Automatic code correction:** Generates a corrected version of the submitted code.
+- **Syntax validation:** Uses Python's AST module to check whether corrected code is syntactically valid.
+- **AI-generated test cases:** Generates behavioral tests covering normal inputs and edge cases.
+- **Automated test execution:** Executes generated tests using Python subprocesses.
+- **Exception testing:** Verifies whether functions raise expected exceptions for invalid inputs.
+- **Manual behavioral testing:** Allows users to provide function arguments and expected results to test specific behavior.
+- **Test-result reporting:** Displays actual results, expected results, and pass/fail status.
+- **Human review:** Allows users to inspect generated test suggestions before relying on their expected behavior.
 
-## Tech Stack
+## ## Tech Stack
 
-- Python
-- LangChain
-- OpenAI API
-- `python-dotenv`
-- Python `unittest`
-
+- **Python** – Application logic and test execution
+- **LangChain** – LLM integration and application components
+- **OpenAI API** – AI-powered code analysis, correction, and test generation
+- **Streamlit** – Interactive web interface
+- **Python AST** – Syntax validation
+- **Python subprocess** – Behavioral test execution
+- **python-dotenv** – Environment variable and API key management
 ## Project Structure
 
 ```text
 Iterative Code Fix Agent/
-├── agent.py                  # Agent logic and tool-calling loop
-├── tools.py                  # File and Python execution tools
-├── buggy_code.py             # Original example implementation
-├── buggy_code_working.py     # File the agent attempts to repair
-├── agent_tests.py            # Automated tests
-├── .gitignore                # Excludes secrets and generated files
-├── README.md                 # Project documentation
-└── requirements.txt          # Python dependencies
+├── app.py                  # Streamlit user interface
+├── agent.py                # AI code correction and testing logic
+├── tools.py                # Original file-based agent tools
+├── requirements.txt        # Python dependencies
+├── .gitignore              # Excludes secrets and generated files
+└── README.md               # Project documentation
 ```
 
 ## How It Works
 
-1. The agent reads the target Python code and existing tests.
-2. The language model analyzes the implementation and determines whether changes are needed.
-3. When appropriate, the agent uses tools to modify the code.
-4. The test suite runs after a code modification.
-5. The agent receives the results and can use them to guide further corrections.
-6. The program displays the original implementation, corrected implementation, and final test results.
+The application follows a code correction and testing workflow:
 
-The agent uses a configurable tool-round limit and a maximum of three writes to the target implementation.
+1. **User input:** The user submits Python code through the Streamlit interface.
+2. **Code analysis:** The OpenAI language model analyzes the submitted implementation and identifies potential problems.
+3. **Code correction:** The model generates corrected Python code and explains its changes.
+4. **Syntax validation:** Python's AST module checks whether the corrected code is syntactically valid.
+5. **Test generation:** The language model generates behavioral test cases, including expected results and exceptions.
+6. **Test validation:** The application validates the generated test data before execution.
+7. **Test execution:** Python executes the test cases in subprocesses and compares actual behavior against expected outcomes.
+8. **Result reporting:** The application displays test results, including passed tests, failed tests, and suggestions requiring human review.
+
+The application also supports manually defining test inputs and expected results.
 
 ## Example
 
-The original implementation does not handle empty input:
+Consider the following function, which contains an incorrect calculation:
 
 ```python
 def calculate_average(numbers):
-    return sum(numbers) / len(numbers)
+    return sum(numbers) / (len(numbers) + 1)
 ```
 
-The corrected implementation handles that edge case:
+The AI can identify the incorrect denominator and generate a corrected implementation.
+
+For example:
 
 ```python
 def calculate_average(numbers):
-    """Return the arithmetic mean of numbers, or 0 for an empty list."""
     if not numbers:
-        return 0
+        raise ValueError("numbers must contain at least one value")
+
     return sum(numbers) / len(numbers)
 ```
 
-For this project, the chosen behavior for an empty list is to return `0`.
+The application can then generate behavioral tests to evaluate the corrected implementation.
 
-## Tests
+Example test cases:
 
-The automated test suite covers:
-
-| Input | Expected result |
-|---|---:|
+| Input | Expected behavior |
+|---|---|
 | `[1, 2, 3, 4]` | `2.5` |
-| `[]` | `0` |
-| `[-2, 1.5, 3.5]` | `1.0` |
+| `[-5]` | `-5.0` |
+| `[-2, 0, 2]` | `0.0` |
+| `[]` | `ValueError` |
 
-Run the tests manually with:
-
-```bash
-python agent_tests.py
-```
-
-Run the agent with:
-
-```bash
-python agent.py
-```
+The expected behavior for edge cases should be reviewed because AI-generated tests and expectations may not always reflect the intended requirements.
 
 ## Setup
 
@@ -122,28 +120,36 @@ Create a `.env` file in the project directory:
 OPENAI_API_KEY=your_api_key_here
 ```
 
-Replace the placeholder with your own API key. Never commit your `.env` file or expose your API key publicly.
+Replace the placeholder with your OpenAI API key.
 
-### 5. Run the project
+Never commit your `.env` file or expose your API key publicly.
+
+### 5. Run the application
 
 ```bash
-python agent.py
+streamlit run app.py
 ```
+
+Streamlit will launch the application in your browser.
 
 ## Current Limitations
 
-- The example focuses on a small Python function rather than a large codebase.
-- Automated tests cover the specified examples, not every possible input or failure scenario.
-- The agent's retry and tool-round limits restrict how many actions it can take.
-- Executing Python code through a subprocess is not a security sandbox; this project should only run trusted code in a controlled environment.
+- The application currently focuses on Python code.
+- AI-generated corrections and test expectations may be incorrect and require human review.
+- Passing generated tests does not guarantee that the implementation is free of bugs.
+- Syntax validation confirms valid Python syntax, not correct program behavior.
+- Test coverage depends on the quality and variety of generated test cases.
+- Test execution uses subprocesses and time limits but is not a secure sandbox. Only run trusted code in a controlled environment.
 
 ## Future Improvements
 
-- Expand test coverage for invalid input and additional edge cases.
-- Add more robust retry and failure-reporting logic.
-- Support additional debugging scenarios and multiple source files.
-- Add logging and a user interface for monitoring agent activity.
+- Expand support for more complex debugging scenarios.
+- Improve test generation and edge-case coverage.
+- Add more robust error handling and reporting.
+- Support larger codebases and multiple source files.
+- Improve execution isolation and security.
+- Add additional testing and debugging controls.
 
 ## Disclaimer
 
-This is an educational project demonstrating tool-using AI agents and automated debugging. Code generated or modified by an AI should always be reviewed before use in production.
+This is an educational project demonstrating AI-powered code correction, LLM integration, and automated behavioral testing. AI-generated code and test results should always be reviewed before use in production.
